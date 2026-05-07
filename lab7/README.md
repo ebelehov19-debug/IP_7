@@ -4,13 +4,13 @@
 
 ```
 lab7/
-├── docker-compose.yml                  # Приложение + БД
-├── docker-compose.observability.yml    # Overlay: Prometheus + Grafana + Tempo
+├── docker-compose.yml
+├── docker-compose.observability.yml   
 │
 ├── todo-app/
 │   ├── backend/
-│   │   ├── server.js          ← + /metrics (prom-client) + OpenTelemetry
-│   │   ├── package.json       ← + prom-client, @opentelemetry/*
+│   │   ├── server.js          
+│   │   ├── package.json      
 │   │   ├── Dockerfile
 │   │   └── .dockerignore
 │   ├── frontend/
@@ -20,10 +20,10 @@ lab7/
 │   │   ├── Dockerfile
 │   │   └── nginx.conf
 │   └── k8s/kustomize/
-│       ├── base/              ← backend-deployment с OTLP env + аннотации scrape
+│       ├── base/             
 │       └── overlays/dev/
 │
-├── todo-infrastructure/       ← из лаб.6 (без изменений)
+├── todo-infrastructure/       
 │   ├── helm/postgres-redis-chart/
 │   └── kustomize/base + overlays/dev/
 │
