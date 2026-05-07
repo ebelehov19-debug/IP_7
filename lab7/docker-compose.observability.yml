@@ -1,0 +1,70 @@
+version: "3.9"
+
+# Запуск: docker compose -f docker-compose.yml -f docker-compose.observability.yml up -d
+# Этот файл добавляет Prometheus, Grafana, Tempo и включает трейсинг в backend.
+
+services:
+  # Перекрываем backend: включаем OTLP
+  backend:
+    environment:
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://tempo:4318
+      OTEL_SERVICE_NAME: todo-backend
+
+  prometheus:
+    image: prom/prometheus:v2.51.0
+    restart: unless-stopped
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./todo-observability/docker-compose/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--storage.tsdb.retention.time=7d"
+      - "--web.enable-lifecycle"
+    networks:
+      - app-net
+
+  grafana:
+    image: grafana/grafana:10.4.0
+    restart: unless-stopped
+    ports:
+      - "3001:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER:     admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_USERS_ALLOW_SIGN_UP:     "false"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./todo-observability/docker-compose/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./todo-observability/docker-compose/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    depends_on:
+      - prometheus
+      - tempo
+    networks:
+      - app-net
+
+  tempo:
+    image: grafana/tempo:2.4.1
+    restart: unless-stopped
+    ports:
+      - "3200:3200"   # Tempo HTTP API
+      - "4317:4317"   # OTLP gRPC
+      - "4318:4318"   # OTLP HTTP
+    volumes:
+      - ./todo-observability/docker-compose/tempo/tempo.yaml:/etc/tempo/tempo.yaml:ro
+      - tempo_data:/var/tempo
+    command: ["-config.file=/etc/tempo/tempo.yaml"]
+    networks:
+      - app-net
+
+volumes:
+  prometheus_data:
+  grafana_data:
+  tempo_data:
+
+networks:
+  app-net:
+    # Сеть уже создана основным docker-compose.yml
+    external: false

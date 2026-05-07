@@ -1,0 +1,14 @@
+namespace: todo-dev
+replicas: 1
+storage:
+  size: 500Mi
+database:
+  username: devuser
+  password: devpass123
+  name: todoapp
+image:
+  repository: postgres
+  tag: "15"
+redis:
+  repository: redis
+  tag: "7"

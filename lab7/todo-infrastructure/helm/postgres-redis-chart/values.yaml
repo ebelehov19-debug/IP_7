@@ -1,0 +1,15 @@
+namespace: default
+replicas: 1
+storage:
+  size: 1Gi
+database:
+  name: todoapp
+  username: admin
+  password: admin123
+image:
+  repository: postgres
+  tag: "15"
+  pullPolicy: IfNotPresent
+redis:
+  repository: redis
+  tag: "7"

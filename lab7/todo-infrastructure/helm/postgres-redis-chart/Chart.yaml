@@ -1,0 +1,5 @@
+apiVersion: v2
+name: postgres-redis-chart
+description: PostgreSQL and Redis infrastructure for Todo App
+version: 1.0.0
+appVersion: "7.0"

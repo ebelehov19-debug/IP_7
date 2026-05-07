@@ -1,0 +1,72 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:15
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB:       todoapp
+      POSTGRES_USER:     devuser
+      POSTGRES_PASSWORD: devpass123
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - app-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U devuser -d todoapp"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    networks:
+      - app-net
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build: ./todo-app/backend
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    environment:
+      DB_HOST:     postgres
+      DB_PORT:     "5432"
+      DB_NAME:     todoapp
+      DB_USER:     devuser
+      DB_PASSWORD: devpass123
+      REDIS_HOST:  redis
+      REDIS_PORT:  "6379"
+      PORT:        "5000"
+      # Трейсинг: раскомментировать при запуске со стеком наблюдаемости
+      # OTEL_EXPORTER_OTLP_ENDPOINT: http://tempo:4318
+      # OTEL_SERVICE_NAME: todo-backend
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - app-net
+
+  frontend:
+    build: ./todo-app/frontend
+    restart: unless-stopped
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+    networks:
+      - app-net
+
+volumes:
+  postgres_data:
+
+networks:
+  app-net:
+    driver: bridge
